@@ -1,6 +1,6 @@
 #include "main.h"
 #include "timer.h"
-#include "ball.h"
+#include "jet.h"
 
 using namespace std;
 
@@ -8,23 +8,62 @@ GLMatrices Matrices;
 GLuint programID;
 GLFWwindow *window;
 
-/**************************
-* Customizable functions *
-**************************/
+Jet jet;
 
-Ball ball1;
-
-float screen_zoom = 1, screen_center_x = 0, screen_center_y = 0;
+float screen_zoom = 0.5, screen_center_x = 0, screen_center_y = 0;
 float camera_rotation_angle = 0;
 
-int first_person = 1, tower;
+int plane_view = 1, top_view, tower_view, follow_cam_view, helicopter_cam_view;
+
+VAO *xaxis, *yaxis, *zaxis;
 
 glm::vec3 eye, target, up;
 
 Timer t60(1.0 / 60);
 
-/* Render the scene with openGL */
-/* Edit this function according to your assignment */
+void createxaxis()
+{
+    GLfloat vertex_buffer_data[] = {
+        1000, 0, 0,  // vertex 0
+        -1000, 0, 0, // vertex 1
+    };
+
+    GLfloat color_buffer_data[] = {
+        1, 0, 0, // color 0
+        1, 0, 0, // color 1
+    };
+
+    xaxis = create3DObject(GL_LINES, 3, vertex_buffer_data, COLOR_RED, GL_LINE);
+}
+void createyaxis()
+{
+    GLfloat vertex_buffer_data[] = {
+        0, 1000, 0,  // vertex 0
+        0, -1000, 0, // vertex 1
+    };
+
+    GLfloat color_buffer_data[] = {
+        0, 1, 0, // color 0
+        0, 1, 0, // color 1
+    };
+
+    yaxis = create3DObject(GL_LINES, 3, vertex_buffer_data, COLOR_GREEN, GL_LINE);
+}
+
+void createzaxis()
+{
+    GLfloat vertex_buffer_data[] = {
+        0, 0, 1000,  // vertex 0
+        0, 0, -1000, // vertex 1
+    };
+
+    GLfloat color_buffer_data[] = {
+        0, 0, 1, // color 0
+        0, 0, 1, // color 1
+    };
+
+    zaxis = create3DObject(GL_LINES, 3, vertex_buffer_data, COLOR_BLUE, GL_LINE);
+}
 void draw()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -36,54 +75,172 @@ void draw()
     // target =  glm::vec3(0, 0, 0);
     // // Up - Up vector defines tilt of camera.  Don't change unless you are sure!!
     // up = glm::vec3(0, 1, 0);
+    // eye = jet.position;
+    // target = glm::vec3(jet.position.x, jet.position.y, jet.position.z - 5);
+    up = glm::vec3(0, 1, 0);
 
-    Matrices.view = glm::lookAt(eye, target, up); // Rotating Camera for 3D
+    if (plane_view)
+    {
+        eye = glm::vec3(jet.position.x - sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y, jet.position.z + cos(jet.rotate_angle * M_PI / 180.0f));
+        target = glm::vec3(jet.position.x - 30 * sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y, jet.position.z + 30 * cos(jet.rotate_angle * M_PI / 180.0f));
+    }
+
+    if (top_view)
+    {
+        eye = glm::vec3(jet.position.x - sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y + 50, jet.position.z + cos(jet.rotate_angle * M_PI / 180.0f));
+        target = glm::vec3(jet.position.x, jet.position.y + 2, jet.position.z);
+    }
+
+    if (tower_view)
+    {
+        eye = glm::vec3(10, 5, 0);
+        target = jet.position;
+    }
+
+    if (follow_cam_view)
+    {
+        eye = glm::vec3(jet.position.x + 40 * sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y + 20, jet.position.z + 40 * cos(jet.rotate_angle * M_PI / 180.0f));
+        target = jet.position;
+    }
+
+    if (helicopter_cam_view)
+    {
+        //helicopter view
+    }
+
+    Matrices.view = glm::lookAt(eye, target, up);
     glm::mat4 VP = Matrices.projection * Matrices.view;
     glm::mat4 MVP;
 
-    // Scene render
-    ball1.draw(VP);
+    // // Scene render
+    Matrices.model = glm::mat4(1.0f);
+    glm::mat4 translatexaxis = glm::translate(glm::vec3(0.0f, 0.0f, 0.0f));
+    glm::mat4 xaxisTransform = translatexaxis;
+    Matrices.model *= xaxisTransform;
+    MVP = VP * Matrices.model;
+    glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+    draw3DObject(xaxis);
+
+    Matrices.model = glm::mat4(1.0f);
+    glm::mat4 translateyaxis = glm::translate(glm::vec3(0.0f, 0.0f, 0.0f));
+    glm::mat4 yaxisTransform = translateyaxis;
+    Matrices.model *= yaxisTransform;
+    MVP = VP * Matrices.model;
+    glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+    draw3DObject(yaxis);
+
+    Matrices.model = glm::mat4(1.0f);
+    glm::mat4 translatezaxis = glm::translate(glm::vec3(0.0f, 0.0f, 0.0f));
+    glm::mat4 zaxisTransform = translatezaxis;
+    Matrices.model *= zaxisTransform;
+    MVP = VP * Matrices.model;
+    glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+    draw3DObject(zaxis);
+
+    jet.draw(VP);
 }
 
 void tick_input(GLFWwindow *window)
 {
-    int left = glfwGetKey(window, GLFW_KEY_LEFT);
-    int right = glfwGetKey(window, GLFW_KEY_RIGHT);
-    if (left)
+    int forward = glfwGetKey(window, GLFW_KEY_UP);
+    int backward = glfwGetKey(window, GLFW_KEY_DOWN);
+    int up = glfwGetKey(window, GLFW_KEY_Z);
+    int down = glfwGetKey(window, GLFW_KEY_C);
+    int tilt_left = glfwGetKey(window, GLFW_KEY_Q);
+    int tilt_right = glfwGetKey(window, GLFW_KEY_E);
+    int rotate_ccl = glfwGetKey(window, GLFW_KEY_A);
+    int rotate_cl = glfwGetKey(window, GLFW_KEY_D);
+
+    if (glfwGetKey(window, GLFW_KEY_1))
     {
-        // Do something
+        //plane view
+        plane_view = 1;
+        top_view = tower_view = follow_cam_view = helicopter_cam_view = 0;
     }
-    first_person = glfwGetKey(window, GLFW_KEY_F);
-    tower = glfwGetKey(window, GLFW_KEY_T);
-    if (first_person)
+    if (glfwGetKey(window, GLFW_KEY_2))
     {
-        eye = ball1.position;
-        target = glm::vec3(ball1.position.x, ball1.position.y, ball1.position.z - 5);
+        //top view
+        top_view = 1;
+        plane_view = tower_view = follow_cam_view = helicopter_cam_view = 0;
     }
-    if (tower)
+    if (glfwGetKey(window, GLFW_KEY_3))
     {
-        eye = glm::vec3(10, 5, 0);
-        target = ball1.position;
+        //tower view
+        tower_view = 1;
+        plane_view = top_view = follow_cam_view = helicopter_cam_view = 0;
+    }
+    if (glfwGetKey(window, GLFW_KEY_4))
+    {
+        //follow cam view
+        follow_cam_view = 1;
+        plane_view = top_view = tower_view = helicopter_cam_view = 0;
+    }
+    if (glfwGetKey(window, GLFW_KEY_5))
+    {
+        //helicopter cam view
+        helicopter_cam_view = 1;
+        plane_view = top_view = tower_view = follow_cam_view = 0;
+    }
+
+    if (forward)
+    {
+        float x_change = -0.5 * sin(jet.rotate_angle * M_PI / 180.0f);
+        float z_change = -0.5 * cos(jet.rotate_angle * M_PI / 180.0f);
+        jet.tick(x_change, 0, z_change);
+    }
+    if (backward)
+    {
+        jet.tick(0, 0, 0.5);
+    }
+    if (up)
+    {
+        jet.tick(0, 0.5, 0);
+    }
+    if (down)
+    {
+        jet.tick(0, -0.5, 0);
+    }
+    if (tilt_left)
+    {
+        jet.tilt_jet = true;
+        jet.tilt_angle += 1;
+    }
+    if (tilt_right)
+    {
+        jet.tilt_jet = true;
+        jet.tilt_angle -= 1;
+    }
+    if (rotate_ccl)
+    {
+        jet.rotate_jet = true;
+        jet.rotate_angle += 1;
+    }
+    if (rotate_cl)
+    {
+        jet.rotate_jet = true;
+        jet.rotate_angle -= 1;
     }
 }
 
 void tick_elements()
 {
-    ball1.tick();
-    // camera_rotation_angle += 1;
 }
 
 void initGL(GLFWwindow *window, int width, int height)
 {
     // Create the models
-    ball1 = Ball(0, 0, 0, COLOR_RED);
+    jet = Jet(0, 0, -2);
 
     programID = LoadShaders("Sample_GL.vert", "Sample_GL.frag");
     Matrices.MatrixID = glGetUniformLocation(programID, "MVP");
 
     reshapeWindow(window, width, height);
 
-    glClearColor(COLOR_BACKGROUND.r / 256.0, COLOR_BACKGROUND.g / 256.0, COLOR_BACKGROUND.b / 256.0, 0.0f); // R, G, B, A
+    createxaxis();
+    createyaxis();
+    createzaxis();
+
+    glClearColor(COLOR_SKY.r / 256.0, COLOR_SKY.g / 256.0, COLOR_SKY.b / 256.0, 0.0f); // R, G, B, A
     glClearDepth(1.0f);
 
     glEnable(GL_DEPTH_TEST);
@@ -103,9 +260,9 @@ int main(int argc, char **argv)
 
     window = initGLFW(width, height);
 
-    eye = ball1.position;
-    target = glm::vec3(ball1.position.x, ball1.position.y, ball1.position.z - 5);
-    up = glm::vec3(0, 1, 0);
+    // eye = jet.position;
+    // target = glm::vec3(jet.position.x, jet.position.y, jet.position.z - 5);
+    // up = glm::vec3(0, 1, 0);
 
     initGL(window, width, height);
 
