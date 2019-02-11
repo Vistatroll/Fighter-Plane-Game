@@ -1,6 +1,8 @@
 #include "main.h"
 #include "timer.h"
+#include "cube.h"
 #include "jet.h"
+#include "score.h"
 
 using namespace std;
 
@@ -9,15 +11,23 @@ GLuint programID;
 GLFWwindow *window;
 
 Jet jet;
+Cube sea;
+vector<Score> scores;
 
-float screen_zoom = 0.5, screen_center_x = 0, screen_center_y = 0;
+float screen_zoom = 0.25, screen_center_x = 0, screen_center_y = 0;
 float camera_rotation_angle = 0;
+
+float sea_level = -40;
+float jet_original_altitude;
+
+float jet_speed, jet_altitude, jet_fuel;
 
 int plane_view = 1, top_view, tower_view, follow_cam_view, helicopter_cam_view;
 
 VAO *xaxis, *yaxis, *zaxis;
 
 glm::vec3 eye, target, up;
+glm::vec3 camera_pos, camera_center, camera_up;
 
 Timer t60(1.0 / 60);
 
@@ -64,6 +74,60 @@ void createzaxis()
 
     zaxis = create3DObject(GL_LINES, 3, vertex_buffer_data, COLOR_BLUE, GL_LINE);
 }
+
+void score_decide(int digit, int i)
+{
+    if (digit == 0)
+    {
+        scores[i].exist1 = scores[i].exist2 = scores[i].exist3 = scores[i].exist4 = scores[i].exist5 = scores[i].exist6 = true;
+        scores[i].exist7 = false;
+    }
+    if (digit == 1)
+    {
+        scores[i].exist2 = scores[i].exist3 = true;
+        scores[i].exist1 = scores[i].exist4 = scores[i].exist5 = scores[i].exist6 = scores[i].exist7 = false;
+    }
+    if (digit == 2)
+    {
+        scores[i].exist1 = scores[i].exist2 = scores[i].exist4 = scores[i].exist5 = scores[i].exist7 = true;
+        scores[i].exist3 = scores[i].exist6 = false;
+    }
+    if (digit == 3)
+    {
+        scores[i].exist1 = scores[i].exist2 = scores[i].exist3 = scores[i].exist4 = scores[i].exist7 = true;
+        scores[i].exist5 = scores[i].exist6 = false;
+    }
+    if (digit == 4)
+    {
+        scores[i].exist2 = scores[i].exist3 = scores[i].exist6 = scores[i].exist7 = true;
+        scores[i].exist1 = scores[i].exist4 = scores[i].exist5 = false;
+    }
+    if (digit == 5)
+    {
+        scores[i].exist1 = scores[i].exist3 = scores[i].exist4 = scores[i].exist6 = scores[i].exist7 = true;
+        scores[i].exist2 = scores[i].exist5 = false;
+    }
+    if (digit == 6)
+    {
+        scores[i].exist1 = scores[i].exist3 = scores[i].exist4 = scores[i].exist5 = scores[i].exist6 = scores[i].exist7 = true;
+        scores[i].exist2 = false;
+    }
+    if (digit == 7)
+    {
+        scores[i].exist1 = scores[i].exist2 = scores[i].exist3 = true;
+        scores[i].exist4 = scores[i].exist5 = scores[i].exist6 = scores[i].exist7 = true;
+    }
+    if (digit == 8)
+    {
+        scores[i].exist1 = scores[i].exist2 = scores[i].exist3 = scores[i].exist4 = scores[i].exist5 = scores[i].exist6 = scores[i].exist7 = true;
+    }
+    if (digit == 9)
+    {
+        scores[i].exist1 = scores[i].exist2 = scores[i].exist3 = scores[i].exist4 = scores[i].exist6 = scores[i].exist7 = true;
+        scores[i].exist5 = false;
+    }
+}
+
 void draw()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -93,13 +157,13 @@ void draw()
 
     if (tower_view)
     {
-        eye = glm::vec3(10, 5, 0);
+        eye = glm::vec3(100, 5, -20);
         target = jet.position;
     }
 
     if (follow_cam_view)
     {
-        eye = glm::vec3(jet.position.x + 40 * sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y + 20, jet.position.z + 40 * cos(jet.rotate_angle * M_PI / 180.0f));
+        eye = glm::vec3(jet.position.x + 25 * sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y - 5, jet.position.z + 25 * cos(jet.rotate_angle * M_PI / 180.0f));
         target = jet.position;
     }
 
@@ -137,7 +201,16 @@ void draw()
     glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
     draw3DObject(zaxis);
 
+    sea.draw(VP);
     jet.draw(VP);
+
+    Matrices.view = glm::lookAt(camera_pos, camera_center, camera_up);
+    VP = Matrices.projection * Matrices.view;
+    float len = scores.size();
+    for (int i = 0; i < len; i++)
+    {
+        scores[i].draw(VP);
+    }
 }
 
 void tick_input(GLFWwindow *window)
@@ -224,12 +297,118 @@ void tick_input(GLFWwindow *window)
 
 void tick_elements()
 {
+    int buf = jet_speed;
+    int h = buf / 100;
+    buf %= 100;
+    int t = buf / 10;
+    int u = buf % 10;
+    score_decide(h, 2);
+    score_decide(t, 3);
+    score_decide(u, 4);
+
+    jet_altitude = 10 * (jet.position.y - sea_level);
+    buf = jet_altitude;
+    h = buf / 100;
+    buf %= 100;
+    t = buf / 10;
+    u = buf % 10;
+    score_decide(h, 7);
+    score_decide(t, 8);
+    score_decide(u, 9);
+
+    buf = jet_fuel;
+    h = buf / 100;
+    buf %= 100;
+    t = buf / 10;
+    u = buf % 10;
+    score_decide(h, 12);
+    score_decide(t, 13);
+    score_decide(u, 14);
 }
 
 void initGL(GLFWwindow *window, int width, int height)
 {
     // Create the models
-    jet = Jet(0, 0, -2);
+    sea = Cube(0, sea_level, 0, 4000, 80, 4000, COLOR_BLUE);
+    jet = Jet(0, 10, jet_original_altitude);
+
+    float pos_org_x = camera_pos.x - 15;
+    float pos_org_y = camera_pos.y - 12;
+    Score s;
+    Score p;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist3 = s.exist4 = s.exist6 = s.exist7 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.0;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist7 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.2;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.2;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.2;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
+    scores.push_back(s);
+
+    pos_org_x += 6.0;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist3 = s.exist5 = s.exist6 = s.exist7 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.0;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist7 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.2;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.2;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.2;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
+    scores.push_back(s);
+
+    pos_org_x += 6.0;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist5 = s.exist6 = s.exist7 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.0;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist7 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.2;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.2;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.2;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
+    scores.push_back(s);
 
     programID = LoadShaders("Sample_GL.vert", "Sample_GL.frag");
     Matrices.MatrixID = glGetUniformLocation(programID, "MVP");
@@ -255,14 +434,19 @@ void initGL(GLFWwindow *window, int width, int height)
 int main(int argc, char **argv)
 {
     srand(time(0));
-    int width = 1000;
-    int height = 1000;
+    int width = 1200;
+    int height = 1200;
+
+    jet_original_altitude = -10;
+    jet_altitude = jet_original_altitude - sea_level;
+    jet_speed = 40;
+    jet_fuel = 50;
+
+    camera_pos = glm::vec3(0, 0, 1);
+    camera_center = glm::vec3(0, 0, 0);
+    camera_up = glm::vec3(0, 1, 0);
 
     window = initGLFW(width, height);
-
-    // eye = jet.position;
-    // target = glm::vec3(jet.position.x, jet.position.y, jet.position.z - 5);
-    // up = glm::vec3(0, 1, 0);
 
     initGL(window, width, height);
 
@@ -276,7 +460,6 @@ int main(int argc, char **argv)
             tick_elements();
             tick_input(window);
         }
-
         glfwPollEvents();
     }
 

@@ -1,4 +1,5 @@
 #include "main.h"
+#include "cone.h"
 
 #ifndef JET_H
 #define JET_H
@@ -14,9 +15,10 @@ class Jet
     void set_position(float x, float y);
     void tick(float speed_x, float speed_y, float speed_z);
     bool rotate_jet, tilt_jet;
+    Cone head, tail;
 
   private:
-    VAO *object1, *object2, *object3;
+    VAO *object1, *object2, *object3, *object4;
 };
 
 #endif

@@ -1,5 +1,6 @@
 #include "jet.h"
 #include "main.h"
+#include "cone.h"
 #define pi 3.14159265358979323846
 
 Jet::Jet(float x, float y, float z)
@@ -7,42 +8,7 @@ Jet::Jet(float x, float y, float z)
     this->position = glm::vec3(x, y, z);
     this->tilt_angle = this->rotate_angle = this->rotation = 0;
     this->rotate_jet = this->tilt_jet = false;
-    // static const GLfloat vertex1[] = {
-    //     0, 0, -2.5,
-    //     -0.5, 0, -0.75,
-    //     0.5, 0, -0.75,
 
-    //     -0.75, 0, -0.75,
-    //     -0.5, 0, -0.75,
-    //     -0.4, 0, -0.9,
-    //     0.75, 0, -0.75,
-    //     0.5, 0, -0.75,
-    //     0.4, 0, -0.9,
-
-    //     -1, 0, 1,
-    //     -0.75, 0, -0.75,
-    //     1, 0, 1,
-    //     -0.75, 0, -0.75,
-    //     1, 0, 1,
-    //     0.75, 0, -0.75,
-
-    //     -2, 0, 2.5,
-    //     -1, 0, 1,
-    //     2, 0, 2.5,
-    //     -1, 0, 1,
-    //     2, 0, 2.5,
-    //     1, 0, 1,
-    // };
-    // this->object1 = create3DObject(GL_TRIANGLES, 7 * 3, vertex1, COLOR_DARK_GREY, GL_FILL);
-    // static const GLfloat vertex2[] = {
-    //     -0.75, 0, 2.5,
-    //     0.75, 0, 2.5,
-    //     -1, 0, 2.75,
-    //     0.75, 0, 2.5,
-    //     -1, 0, 2.75,
-    //     1, 0, 2.75,
-    // };
-    // this->object2 = create3DObject(GL_TRIANGLES, 2 * 3, vertex2, COLOR_BLACK, GL_FILL);
     int n_circles = 2000;
     int n = 20;
     float r = 0.4;
@@ -66,121 +32,123 @@ Jet::Jet(float x, float y, float z)
     }
     static const GLfloat vertex2[] = {
         //back
-        0.4f, -0.2f, 1.0f,
-        0.3f, 0.0f, 1.0f,
-        1.0f, -0.2f, 1.0f,
-
-        //front
         0.4f, -0.2f, 0.8f,
         0.3f, 0.0f, 0.8f,
         1.0f, -0.2f, 0.8f,
 
-        // //top
-        0.4f, 0.0f, 1.0f,
-        1.0f, -0.2f, 1.0f,
-        1.0f, -0.2f, 0.8f,
+        //front
+        0.4f, -0.2f, 0.6f,
+        0.3f, 0.0f, 0.6f,
+        1.0f, -0.2f, 0.6f,
 
-        0.4f, 0.0f, 1.0f,
+        // //top
         0.4f, 0.0f, 0.8f,
         1.0f, -0.2f, 0.8f,
+        1.0f, -0.2f, 0.6f,
+
+        0.4f, 0.0f, 0.8f,
+        0.4f, 0.0f, 0.6f,
+        1.0f, -0.2f, 0.6f,
 
         // // bottom
-        0.3f, -0.2f, 1.0f,
-        1.0f, -0.2f, 1.0f,
-        1.0f, -0.2f, 0.8f,
-
         0.3f, -0.2f, 0.8f,
-        0.3f, -0.2f, 1.0f,
         1.0f, -0.2f, 0.8f,
+        1.0f, -0.2f, 0.6f,
+
+        0.3f, -0.2f, 0.6f,
+        0.3f, -0.2f, 0.8f,
+        1.0f, -0.2f, 0.6f,
 
         // left back
-        -0.4f, -0.2f, 1.0f,
-        -0.3f, 0.0f, 1.0f,
-        -1.0f, -0.2f, 1.0f,
-
-        //left front
         -0.4f, -0.2f, 0.8f,
         -0.3f, 0.0f, 0.8f,
         -1.0f, -0.2f, 0.8f,
 
-        // //top
-        -0.4f, 0.0f, 1.0f,
-        -1.0f, -0.2f, 1.0f,
-        -1.0f, -0.2f, 0.8f,
+        //left front
+        -0.4f, -0.2f, 0.6f,
+        -0.3f, 0.0f, 0.6f,
+        -1.0f, -0.2f, 0.6f,
 
-        -0.4f, 0.0f, 1.0f,
+        // //top
         -0.4f, 0.0f, 0.8f,
         -1.0f, -0.2f, 0.8f,
+        -1.0f, -0.2f, 0.6f,
+
+        -0.4f, 0.0f, 0.8f,
+        -0.4f, 0.0f, 0.6f,
+        -1.0f, -0.2f, 0.6f,
 
         // // bottom
-        -0.3f, -0.2f, 1.0f,
-        -1.0f, -0.2f, 1.0f,
-        -1.0f, -0.2f, 0.8f,
-
         -0.3f, -0.2f, 0.8f,
-        -0.3f, -0.2f, 1.0f,
-        -1.0f, -0.2f, 0.8f};
+        -1.0f, -0.2f, 0.8f,
+        -1.0f, -0.2f, 0.6f,
+
+        -0.3f, -0.2f, 0.6f,
+        -0.3f, -0.2f, 0.8f,
+        -1.0f, -0.2f, 0.6f};
 
     static const GLfloat vertex3[] = {
         //back
-        0.4f, 0.0f, 0.2f,
-        0.3f, 0.2f, 0.2f,
-        2.0f, -0.0f, 0.2f,
+        0.4f, 0.0f, 0.0f,
+        0.3f, 0.2f, 0.0f,
+        2.0f, -0.0f, 0.0f,
 
         //front
-        0.4f, -0.0f, -0.1f,
-        0.3f, 0.2f, -0.1f,
-        2.0f, -0.0f, -0.1f,
+        0.4f, -0.0f, -0.3f,
+        0.3f, 0.2f, -0.3f,
+        2.0f, -0.0f, -0.3f,
 
         // //top
-        0.4f, 0.2f, 0.2f,
-        2.0f, -0.0f, 0.2f,
-        2.0f, -0.0f, -0.1f,
+        0.4f, 0.2f, 0.0f,
+        2.0f, -0.0f, 0.0f,
+        2.0f, -0.0f, -0.3f,
 
-        0.4f, 0.2f, 0.2f,
-        0.4f, 0.2f, -0.1f,
-        2.0f, -0.0f, -0.1f,
+        0.4f, 0.2f, 0.0f,
+        0.4f, 0.2f, -0.3f,
+        2.0f, -0.0f, -0.3f,
 
         // // bottom
-        0.3f, -0.0f, 0.2f,
-        2.0f, -0.0f, 0.2f,
-        2.0f, -0.0f, -0.1f,
+        0.3f, -0.0f, 0.0f,
+        2.0f, -0.0f, 0.0f,
+        2.0f, -0.0f, -0.3f,
 
-        0.3f, -0.0f, -0.1f,
-        0.3f, -0.0f, 0.2f,
-        2.0f, -0.0f, -0.1f,
+        0.3f, -0.0f, -0.3f,
+        0.3f, -0.0f, 0.0f,
+        2.0f, -0.0f, -0.3f,
 
         // left back
-        -0.4f, -0.0f, 0.2f,
-        -0.3f, 0.2f, 0.2f,
-        -2.0f, -0.0f, 0.2f,
+        -0.4f, -0.0f, 0.0f,
+        -0.3f, 0.2f, 0.0f,
+        -2.0f, -0.0f, 0.0f,
 
         //left front
-        -0.4f, -0.0f, -0.1f,
-        -0.3f, 0.2f, -0.1f,
-        -2.0f, -0.0f, -0.1f,
+        -0.4f, -0.0f, -0.3f,
+        -0.3f, 0.2f, -0.3f,
+        -2.0f, -0.0f, -0.3f,
 
         // //top
-        -0.4f, 0.2f, 0.2f,
-        -2.0f, -0.0f, 0.2f,
-        -2.0f, -0.0f, -0.1f,
+        -0.4f, 0.2f, 0.0f,
+        -2.0f, -0.0f, 0.0f,
+        -2.0f, -0.0f, -0.3f,
 
-        -0.4f, 0.2f, 0.2f,
-        -0.4f, 0.2f, -0.1f,
-        -2.0f, -0.0f, -0.1f,
+        -0.4f, 0.2f, 0.0f,
+        -0.4f, 0.2f, -0.3f,
+        -2.0f, -0.0f, -0.3f,
 
         // // bottom
-        -0.3f, -0.0f, 0.2f,
-        -2.0f, -0.0f, 0.2f,
-        -2.0f, -0.0f, -0.1f,
+        -0.3f, -0.0f, 0.0f,
+        -2.0f, -0.0f, 0.0f,
+        -2.0f, -0.0f, -0.3f,
 
-        -0.3f, -0.0f, -0.1f,
-        -0.3f, -0.0f, 0.2f,
-        -2.0f, -0.0f, -0.1f};
+        -0.3f, -0.0f, -0.3f,
+        -0.3f, -0.0f, 0.0f,
+        -2.0f, -0.0f, -0.3f};
 
     this->object1 = create3DObject(GL_TRIANGLES, 3 * n * n_circles, vertex1, COLOR_DARK_GREY, GL_FILL);
     this->object2 = create3DObject(GL_TRIANGLES, 12 * 3, vertex2, COLOR_WHITE, GL_FILL);
     this->object3 = create3DObject(GL_TRIANGLES, 12 * 3, vertex3, COLOR_WHITE, GL_FILL);
+    this->head = Cone(0, 0, -1.0, 1.0, r, COLOR_DARK_GREY);
+    this->tail = Cone(0, 0, 1.3, 0.8, r, COLOR_BLACK);
 }
 
 void Jet::draw(glm::mat4 VP)
@@ -198,6 +166,8 @@ void Jet::draw(glm::mat4 VP)
     draw3DObject(this->object3);
     draw3DObject(this->object2);
     draw3DObject(this->object1);
+    this->head.draw(MVP);
+    this->tail.draw(MVP);
 }
 
 void Jet::set_position(float x, float y)
