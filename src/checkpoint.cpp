@@ -10,6 +10,7 @@ Checkpoint::Checkpoint(float x, float y, float z, color_t color)
 
     this->position = glm::vec3(x, y, z);
     this->rotation = 0;
+    this->exist = true;
 
     cuboid = Cuboid(0, 0, 0, this->h, this->w, this->b, color);
 
@@ -26,7 +27,7 @@ Checkpoint::Checkpoint(float x, float y, float z, color_t color)
         vertex1[i + 1] = 0.5 + r * cos(theta);
         vertex1[i + 2] = r * sin(theta);
         vertex1[i + 3] = 0.5;
-        vertex1[i + 4] =  0.5 + r * cos(theta + (2 * pi) / n);
+        vertex1[i + 4] = 0.5 + r * cos(theta + (2 * pi) / n);
         vertex1[i + 5] = r * sin(theta + (2 * pi) / n);
         vertex1[i + 6] = 0.5;
         vertex1[i + 7] = 0.5;
@@ -62,9 +63,11 @@ void Checkpoint::draw(glm::mat4 VP)
     glm::mat4 MVP = VP * Matrices.model;
     glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
     this->cuboid.draw(MVP);
-    this->cannon_body.draw(MVP);
-    this->cannon_base.draw(MVP);
-    draw3DObject(this->wheel1);
-    draw3DObject(this->wheel2);
-    // this->cannon.draw(MVP);  
+    if (this->exist)
+    {
+        this->cannon_body.draw(MVP);
+        this->cannon_base.draw(MVP);
+        draw3DObject(this->wheel1);
+        draw3DObject(this->wheel2);
+    }
 }

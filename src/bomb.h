@@ -13,7 +13,9 @@ public:
   glm::vec3 position;
   float rotation;
   bool exist;
+  float speed;
   void draw(glm::mat4 VP);
+  void tick();
   Cuboid body;
   Frustum up, down, middle;
 

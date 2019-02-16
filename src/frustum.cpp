@@ -46,6 +46,9 @@ void Frustum::draw(glm::mat4 VP)
     draw3DObject(this->object);
 }
 
-void Frustum::tick()
+void Frustum::tick(float speed_x, float speed_y, float speed_z)
 {
+    this->position.x += speed_x;
+    this->position.y += speed_y;
+    this->position.z += speed_z;
 }

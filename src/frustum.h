@@ -11,7 +11,7 @@ public:
   glm::vec3 position;
   float rotation;
   void draw(glm::mat4 VP);
-  void tick();
+  void tick(float speed_x, float speed_y, float speed_z);
 
 private:
   VAO *object;

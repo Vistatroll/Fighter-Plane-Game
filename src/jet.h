@@ -1,5 +1,6 @@
 #include "main.h"
 #include "cone.h"
+#include "cuboid.h"
 
 #ifndef JET_H
 #define JET_H
@@ -16,6 +17,7 @@ class Jet
     void tick(float speed_x, float speed_y, float speed_z);
     bool rotate_jet, tilt_jet;
     Cone head, tail;
+    Cuboid target1, target2;
 
   private:
     VAO *object1, *object2, *object3, *object4;

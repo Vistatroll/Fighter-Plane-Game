@@ -7,6 +7,7 @@ Bomb::Bomb(float x, float y, float z)
     this->position = glm::vec3(x, y, z);
     this->rotation = 0;
     this->exist = true;
+    this->speed = 0.03;
 
     up = Frustum(0, 0.7, 0, 1, 0.5, 1, COLOR_BOMB);
     down = Frustum(0, -0.7, 0, 1, 1, 0.5, COLOR_BOMB);
@@ -25,4 +26,10 @@ void Bomb::draw(glm::mat4 VP)
     up.draw(MVP);
     down.draw(MVP);
     middle.draw(MVP);
+}
+
+void Bomb::tick()
+{
+    this->speed += 0.01;
+    this->position.y -= this->speed;
 }

@@ -12,6 +12,7 @@ public:
   Checkpoint(float x, float y, float z, color_t color);
   glm::vec3 position;
   float rotation;
+  bool exist;
   void draw(glm::mat4 VP);
   float w, h, b, y;
   Cuboid cuboid;

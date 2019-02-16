@@ -149,6 +149,11 @@ Jet::Jet(float x, float y, float z)
     this->object3 = create3DObject(GL_TRIANGLES, 12 * 3, vertex3, COLOR_WHITE, GL_FILL);
     this->head = Cone(0, 0, -1.0, 1.0, r, COLOR_DARK_GREY);
     this->tail = Cone(0, 0, 1.3, 0.8, r, COLOR_BLACK);
+
+    this->target1 = Cuboid(0, 1, -4, 0.2, 2.5, 0.02, COLOR_RED);
+    this->target1.rotation = 45;
+    this->target2 = Cuboid(0, 1, -4, 0.2, 2.5, 0.02, COLOR_RED);
+    this->target2.rotation = -45;
 }
 
 void Jet::draw(glm::mat4 VP)
@@ -168,6 +173,8 @@ void Jet::draw(glm::mat4 VP)
     draw3DObject(this->object1);
     this->head.draw(MVP);
     this->tail.draw(MVP);
+    this->target1.draw(MVP);
+    this->target2.draw(MVP);
 }
 
 void Jet::set_position(float x, float y)

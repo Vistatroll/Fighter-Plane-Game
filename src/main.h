@@ -83,6 +83,7 @@ struct bounding_box_t
 };
 
 bool detect_collision(bounding_box_t a, bounding_box_t b);
+void detect_collisions();
 
 extern float screen_zoom, screen_center_x, screen_center_y;
 extern bool left_mouse_button, right_mouse_button;
@@ -106,5 +107,6 @@ extern const color_t COLOR_RING;
 extern const color_t COLOR_CORAL;
 extern const color_t COLOR_BLUEVIOLET;
 extern const color_t COLOR_BOMB;
+extern const color_t COLOR_FIRE;
 
 #endif

@@ -12,10 +12,11 @@ public:
   Missile() {}
   Missile(float x, float y, float z, float l, float r, color_t color_body, color_t color_head);
   glm::vec3 position;
-  float rotation;
+  float x_rotation, y_rotation, z_rotation;
+  bool move_up;
   bool exist;
   void draw(glm::mat4 VP);
-  void tick();
+  void tick(float speed_x, float speed_y, float speed_z);
   Cylinder body;
   Cone head;
   Frustum tail;
