@@ -1,8 +1,20 @@
 #include "main.h"
 #include "timer.h"
-#include "cube.h"
+#include "cuboid.h"
+#include "cone.h"
+#include "cylinder.h"
+#include "frustum.h"
+#include "sphere.h"
 #include "jet.h"
 #include "score.h"
+#include "checkpoint.h"
+#include "volcano.h"
+#include "missile.h"
+#include "arrow.h"
+#include "fuelup.h"
+#include "ring.h"
+#include "parachute.h"
+#include "bomb.h"
 
 using namespace std;
 
@@ -11,18 +23,30 @@ GLuint programID;
 GLFWwindow *window;
 
 Jet jet;
-Cube sea;
+Cuboid sea;
+Volcano volcano;
+vector<Checkpoint> checkpoints;
+Arrow arrow;
+vector<Missile> enemy_missiles;
+vector<Missile> jet_missiles;
+vector<Bomb> bombs;
+vector<Fuelup> fuelups;
+vector<Ring> rings;
+vector<Parachute> parachutes;
 vector<Score> scores;
 
-float screen_zoom = 0.25, screen_center_x = 0, screen_center_y = 0;
+float screen_zoom = 0.2, screen_center_x = 0, screen_center_y = 0;
 float camera_rotation_angle = 0;
 
-float sea_level = -40;
+float sea_level;
 float jet_original_altitude;
-
 float jet_speed, jet_altitude, jet_fuel;
+float arrow_sf = 10;
 
-int plane_view = 1, top_view, tower_view, follow_cam_view, helicopter_cam_view;
+bool left_mouse_button, right_mouse_button;
+int num_missiles_jet = -1, num_bombs_jet = -1;
+
+int plane_view, top_view, tower_view, follow_cam_view, helicopter_cam_view;
 
 VAO *xaxis, *yaxis, *zaxis;
 
@@ -34,8 +58,8 @@ Timer t60(1.0 / 60);
 void createxaxis()
 {
     GLfloat vertex_buffer_data[] = {
-        1000, 0, 0,  // vertex 0
-        -1000, 0, 0, // vertex 1
+        4000, 0, 0,  // vertex 0
+        -4000, 0, 0, // vertex 1
     };
 
     GLfloat color_buffer_data[] = {
@@ -48,8 +72,8 @@ void createxaxis()
 void createyaxis()
 {
     GLfloat vertex_buffer_data[] = {
-        0, 1000, 0,  // vertex 0
-        0, -1000, 0, // vertex 1
+        0, 4000, 0,  // vertex 0
+        0, -4000, 0, // vertex 1
     };
 
     GLfloat color_buffer_data[] = {
@@ -63,8 +87,8 @@ void createyaxis()
 void createzaxis()
 {
     GLfloat vertex_buffer_data[] = {
-        0, 0, 1000,  // vertex 0
-        0, 0, -1000, // vertex 1
+        0, 0, 4000,  // vertex 0
+        0, 0, -4000, // vertex 1
     };
 
     GLfloat color_buffer_data[] = {
@@ -133,20 +157,12 @@ void draw()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(programID);
 
-    // Eye - Location of camera. Don't change unless you are sure!!
-    // eye  = glm::vec3( 5*cos(camera_rotation_angle*M_PI/180.0f), 0, 5*sin(camera_rotation_angle*M_PI/180.0f) );
-    // // Target - Where is the camera looking at.  Don't change unless you are sure!!
-    // target =  glm::vec3(0, 0, 0);
-    // // Up - Up vector defines tilt of camera.  Don't change unless you are sure!!
-    // up = glm::vec3(0, 1, 0);
-    // eye = jet.position;
-    // target = glm::vec3(jet.position.x, jet.position.y, jet.position.z - 5);
     up = glm::vec3(0, 1, 0);
 
     if (plane_view)
     {
-        eye = glm::vec3(jet.position.x - sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y, jet.position.z + cos(jet.rotate_angle * M_PI / 180.0f));
-        target = glm::vec3(jet.position.x - 30 * sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y, jet.position.z + 30 * cos(jet.rotate_angle * M_PI / 180.0f));
+        eye = glm::vec3(jet.position.x + 501 * sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y + 2, jet.position.z + 501 * cos(jet.rotate_angle * M_PI / 180.0f));
+        target = glm::vec3(jet.position.x - 30 * sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y, jet.position.z - 30 * cos(jet.rotate_angle * M_PI / 180.0f));
     }
 
     if (top_view)
@@ -158,12 +174,12 @@ void draw()
     if (tower_view)
     {
         eye = glm::vec3(100, 5, -20);
-        target = jet.position;
+        target = glm::vec3(jet.position.x, jet.position.y - 5, jet.position.z);
     }
 
     if (follow_cam_view)
     {
-        eye = glm::vec3(jet.position.x + 25 * sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y - 5, jet.position.z + 25 * cos(jet.rotate_angle * M_PI / 180.0f));
+        eye = glm::vec3(jet.position.x + 5 * sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y + 0.5, jet.position.z + 5 * cos(jet.rotate_angle * M_PI / 180.0f));
         target = jet.position;
     }
 
@@ -178,35 +194,73 @@ void draw()
 
     // // Scene render
     Matrices.model = glm::mat4(1.0f);
-    glm::mat4 translatexaxis = glm::translate(glm::vec3(0.0f, 0.0f, 0.0f));
-    glm::mat4 xaxisTransform = translatexaxis;
-    Matrices.model *= xaxisTransform;
-    MVP = VP * Matrices.model;
-    glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-    draw3DObject(xaxis);
+    // glm::mat4 translatexaxis = glm::translate(glm::vec3(0.0f, 0.0f, 0.0f));
+    // glm::mat4 xaxisTransform = translatexaxis;
+    // Matrices.model *= xaxisTransform;
+    // MVP = VP * Matrices.model;
+    // glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+    // draw3DObject(xaxis);
 
-    Matrices.model = glm::mat4(1.0f);
-    glm::mat4 translateyaxis = glm::translate(glm::vec3(0.0f, 0.0f, 0.0f));
-    glm::mat4 yaxisTransform = translateyaxis;
-    Matrices.model *= yaxisTransform;
-    MVP = VP * Matrices.model;
-    glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-    draw3DObject(yaxis);
+    // Matrices.model = glm::mat4(1.0f);
+    // glm::mat4 translateyaxis = glm::translate(glm::vec3(0.0f, 0.0f, 0.0f));
+    // glm::mat4 yaxisTransform = translateyaxis;
+    // Matrices.model *= yaxisTransform;
+    // MVP = VP * Matrices.model;
+    // glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+    // draw3DObject(yaxis);
 
-    Matrices.model = glm::mat4(1.0f);
-    glm::mat4 translatezaxis = glm::translate(glm::vec3(0.0f, 0.0f, 0.0f));
-    glm::mat4 zaxisTransform = translatezaxis;
-    Matrices.model *= zaxisTransform;
-    MVP = VP * Matrices.model;
-    glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-    draw3DObject(zaxis);
+    // Matrices.model = glm::mat4(1.0f);
+    // glm::mat4 translatezaxis = glm::translate(glm::vec3(0.0f, 0.0f, 0.0f));
+    // glm::mat4 zaxisTransform = translatezaxis;
+    // Matrices.model *= zaxisTransform;
+    // MVP = VP * Matrices.model;
+    // glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+    // draw3DObject(zaxis);
 
     sea.draw(VP);
+
+    volcano.draw(VP);
+
+    int len = checkpoints.size();
+    for (int i = 0; i < len; i++)
+        checkpoints[i].draw(VP);
+
+    arrow.draw(VP, arrow_sf);
+
+    len = fuelups.size();
+    for (int i = 0; i < len; i++)
+        if (fuelups[i].exist)
+            fuelups[i].draw(VP);
+
+    len = rings.size();
+    for (int i = 0; i < len; i++)
+        rings[i].draw(VP);
+
+    len = parachutes.size();
+    for (int i = 0; i < len; i++)
+        if (parachutes[i].exist)
+            parachutes[i].draw(VP);
+
+    len = enemy_missiles.size();
+    for (int i = 0; i < len; i++)
+        if (enemy_missiles[i].exist)
+            enemy_missiles[i].draw(VP);
+
+    len = jet_missiles.size();
+    for (int i = 0; i < len; i++)
+        if (jet_missiles[i].exist)
+            jet_missiles[i].draw(VP);
+
+    len = bombs.size();
+    for (int i = 0; i < len; i++)
+        if (bombs[i].exist)
+            bombs[i].draw(VP);
+
     jet.draw(VP);
 
     Matrices.view = glm::lookAt(camera_pos, camera_center, camera_up);
-    VP = Matrices.projection * Matrices.view;
-    float len = scores.size();
+    VP = Matrices.projection1 * Matrices.view;
+    len = scores.size();
     for (int i = 0; i < len; i++)
     {
         scores[i].draw(VP);
@@ -267,11 +321,11 @@ void tick_input(GLFWwindow *window)
     }
     if (up)
     {
-        jet.tick(0, 0.5, 0);
+        jet.tick(0, 0.1, 0);
     }
     if (down)
     {
-        jet.tick(0, -0.5, 0);
+        jet.tick(0, -0.1, 0);
     }
     if (tilt_left)
     {
@@ -286,12 +340,48 @@ void tick_input(GLFWwindow *window)
     if (rotate_ccl)
     {
         jet.rotate_jet = true;
-        jet.rotate_angle += 1;
+        jet.rotate_angle += 0.5;
     }
     if (rotate_cl)
     {
         jet.rotate_jet = true;
-        jet.rotate_angle -= 1;
+        jet.rotate_angle -= 0.5;
+    }
+
+    if (left_mouse_button)
+    {
+        Missile jet_m = Missile(jet.position.x, jet.position.y - 2, jet.position.z, 4, 0.6, COLOR_LIGHT_GREY, COLOR_DARK_GREEN);
+        if (num_missiles_jet == -1)
+        {
+            jet_missiles.push_back(jet_m);
+            num_missiles_jet++;
+        }
+        else
+        {
+            if (sqrt((jet_missiles[num_missiles_jet].position.x - jet_m.position.x) * (jet_missiles[num_missiles_jet].position.x - jet_m.position.x) + (jet_missiles[num_missiles_jet].position.y - jet_m.position.y) * (jet_missiles[num_missiles_jet].position.y - jet_m.position.y) + (jet_missiles[num_missiles_jet].position.z - jet_m.position.z) * (jet_missiles[num_missiles_jet].position.z - jet_m.position.z)) >= 10)
+            {
+                jet_missiles.push_back(jet_m);
+                num_missiles_jet++;
+            }
+        }
+    }
+
+    if (right_mouse_button)
+    {
+        Bomb jet_b = Bomb(jet.position.x, jet.position.y - 2, jet.position.z);
+        if (num_bombs_jet == -1)
+        {
+            bombs.push_back(jet_b);
+            num_bombs_jet++;
+        }
+        else
+        {
+            if (sqrt((bombs[num_bombs_jet].position.x - jet_b.position.x) * (bombs[num_bombs_jet].position.x - jet_b.position.x) + (bombs[num_bombs_jet].position.y - jet_b.position.y) * (bombs[num_bombs_jet].position.y - jet_b.position.y) + (bombs[num_bombs_jet].position.z - jet_b.position.z) * (bombs[num_bombs_jet].position.z - jet_b.position.z)) >= 10)
+            {
+                bombs.push_back(jet_b);
+                num_bombs_jet++;
+            }
+        }
     }
 }
 
@@ -306,7 +396,7 @@ void tick_elements()
     score_decide(t, 3);
     score_decide(u, 4);
 
-    jet_altitude = 10 * (jet.position.y - sea_level);
+    jet_altitude = 10 * jet.position.y;
     buf = jet_altitude;
     h = buf / 100;
     buf %= 100;
@@ -324,18 +414,40 @@ void tick_elements()
     score_decide(h, 12);
     score_decide(t, 13);
     score_decide(u, 14);
+
+    arrow_sf = sqrt((jet.position.x - checkpoints[0].position.x) * (jet.position.x - checkpoints[0].position.x) + (jet.position.y - checkpoints[0].position.y) * (jet.position.y - checkpoints[0].position.y) + (jet.position.z - checkpoints[0].position.z) * (jet.position.z - checkpoints[0].position.z)) / (float)4;
+    if (arrow_sf <= 2)
+        arrow_sf = 2;
+    if (arrow_sf >= 10)
+        arrow_sf = 10;
 }
 
 void initGL(GLFWwindow *window, int width, int height)
 {
-    // Create the models
-    sea = Cube(0, sea_level, 0, 4000, 80, 4000, COLOR_BLUE);
-    jet = Jet(0, 10, jet_original_altitude);
+    sea = Cuboid(0, sea_level, 0, abs(2 * sea_level), 400, 400, COLOR_SEA);
+
+    jet = Jet(0, jet_original_altitude, -10);
+
+    volcano = Volcano(10, 0, -5, COLOR_VOLCANO);
+
+    Checkpoint chkp = Checkpoint(8, 1, -40, COLOR_CHECKPOINT);
+    // chkp.rotation = 90;
+    checkpoints.push_back(chkp);
+
+    arrow = Arrow(10, 30, -40);
+    
+    Fuelup fp = Fuelup(5, 5, 5);
+    fuelups.push_back(fp);
+
+    Ring r = Ring(-20, 30, 0);
+    rings.push_back(r);
+
+    Parachute para = Parachute(-10, 2, 0);
+    parachutes.push_back(para);
 
     float pos_org_x = camera_pos.x - 15;
-    float pos_org_y = camera_pos.y - 12;
+    float pos_org_y = camera_pos.y - 15;
     Score s;
-    Score p;
     s = Score(pos_org_x, pos_org_y);
     s.exist1 = s.exist3 = s.exist4 = s.exist6 = s.exist7 = true;
     scores.push_back(s);
@@ -436,9 +548,11 @@ int main(int argc, char **argv)
     srand(time(0));
     int width = 1200;
     int height = 1200;
+    follow_cam_view = 1;
 
-    jet_original_altitude = -10;
-    jet_altitude = jet_original_altitude - sea_level;
+    jet_original_altitude = 10;
+    sea_level = -400;
+    jet_altitude = 10 * jet_original_altitude;
     jet_speed = 40;
     jet_fuel = 50;
 
@@ -478,5 +592,6 @@ void reset_screen()
     float bottom = screen_center_y - 4 / screen_zoom;
     float left = screen_center_x - 4 / screen_zoom;
     float right = screen_center_x + 4 / screen_zoom;
-    Matrices.projection = glm::ortho(left, right, bottom, top, 0.1f, 500.0f);
+    Matrices.projection = glm::ortho(left, right, bottom, top, -500.0f, 500.0f);
+    Matrices.projection1 = glm::ortho(left, right, bottom, top, 0.1f, 500.0f);
 }

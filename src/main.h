@@ -56,6 +56,7 @@ typedef struct VAO VAO;
 struct GLMatrices
 {
     glm::mat4 projection;
+    glm::mat4 projection1;
     glm::mat4 model;
     glm::mat4 view;
     GLuint MatrixID;
@@ -84,6 +85,7 @@ struct bounding_box_t
 bool detect_collision(bounding_box_t a, bounding_box_t b);
 
 extern float screen_zoom, screen_center_x, screen_center_y;
+extern bool left_mouse_button, right_mouse_button;
 void reset_screen();
 
 // ---- Colors ----
@@ -96,5 +98,13 @@ extern const color_t COLOR_BACKGROUND;
 extern const color_t COLOR_LIGHT_GREY;
 extern const color_t COLOR_DARK_GREY;
 extern const color_t COLOR_SKY;
+extern const color_t COLOR_SEA;
+extern const color_t COLOR_CHECKPOINT;
+extern const color_t COLOR_VOLCANO;
+extern const color_t COLOR_DARK_GREEN;
+extern const color_t COLOR_RING;
+extern const color_t COLOR_CORAL;
+extern const color_t COLOR_BLUEVIOLET;
+extern const color_t COLOR_BOMB;
 
 #endif
