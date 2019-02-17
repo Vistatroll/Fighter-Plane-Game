@@ -39,11 +39,15 @@ vector<Score> scores;
 float screen_zoom = 0.12, screen_center_x = 0, screen_center_y = 0;
 float camera_rotation_angle = 0;
 
+time_t start_time, volcano_smoke_clear, fuel_reduce;
+
 float sea_level;
 float jet_original_altitude;
 float jet_speed, jet_altitude, jet_fuel;
 float arrow_sf = 10;
+
 int curr_chkp = 0;
+int points = 0, lives = 10;
 
 bool left_mouse_button, right_mouse_button;
 int num_missiles_jet = -1, num_bombs_jet = -1;
@@ -119,19 +123,24 @@ void draw()
 
     if (plane_view)
     {
-        eye = glm::vec3(jet.position.x + 501 * sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y + 2, jet.position.z + 501 * cos(jet.rotate_angle * M_PI / 180.0f));
-        target = glm::vec3(jet.position.x - 30 * sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y, jet.position.z - 30 * cos(jet.rotate_angle * M_PI / 180.0f));
+        eye = glm::vec3(jet.position.x - 502 * sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y- 10, jet.position.z - 502 * cos(jet.rotate_angle * M_PI / 180.0f));
+        target = glm::vec3(jet.position.x - 520 * sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y - 20, jet.position.z - 520 * cos(jet.rotate_angle * M_PI / 180.0f));
     }
 
     if (top_view)
     {
         eye = glm::vec3(jet.position.x - sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y + 50, jet.position.z + cos(jet.rotate_angle * M_PI / 180.0f));
         target = glm::vec3(jet.position.x, jet.position.y + 2, jet.position.z);
+        // eye = glm::vec3(jet.position.x * cos(jet.rotate_angle * M_PI / 180) + jet.position.z * sin(jet.rotate_angle * M_PI / 180), jet.position.y + 50, -jet.position.x * sin(jet.rotate_angle * M_PI / 180) + jet.position.z * cos(jet.rotate_angle * M_PI / 180));
+        // target = glm::vec3(jet.position.x * cos(jet.rotate_angle * M_PI / 180) + jet.position.z * sin(jet.rotate_angle * M_PI / 180), jet.position.y + 2, -jet.position.x * sin(jet.rotate_angle * M_PI / 180) + jet.position.z * cos(jet.rotate_angle * M_PI / 180));
+        // eye = (eye * glm::rotate((float)jet.rotate_angle, glm::vec3[0, 1, 0]));
+        // target.x = target.x * sin(camera_rotation_angle * M_PI / 180.0f);
+        // target.z = target.z * cos(camera_rotation_angle * M_PI / 180.0f);
     }
 
     if (tower_view)
     {
-        eye = glm::vec3(100, 50, -20);
+        eye = glm::vec3(100, 50, 0);
         target = glm::vec3(jet.position.x, jet.position.y - 5, jet.position.z);
     }
 
@@ -280,11 +289,13 @@ void tick_input(GLFWwindow *window)
     {
         jet.rotate_jet = true;
         jet.rotate_angle += 0.5;
+        camera_rotation_angle += 0.5;
     }
     if (rotate_cl && jet.move)
     {
         jet.rotate_jet = true;
         jet.rotate_angle -= 0.5;
+        camera_rotation_angle -= 0.5;
     }
 
     if (left_mouse_button && jet.move)
@@ -357,6 +368,21 @@ void tick_elements()
     score_decide(h, 12);
     score_decide(t, 13);
     score_decide(u, 14);
+
+    buf = points;
+    h = buf / 100;
+    buf %= 100;
+    t = buf / 10;
+    u = buf % 10;
+    score_decide(h, 17);
+    score_decide(t, 18);
+    score_decide(u, 19);
+
+    buf = lives;
+    t = buf / 10;
+    u = buf % 10;
+    score_decide(t, 22);
+    score_decide(u, 23);
 
     arrow_sf = sqrt((jet.position.x - checkpoints[0].position.x) * (jet.position.x - checkpoints[0].position.x) + (jet.position.y - checkpoints[0].position.y) * (jet.position.y - checkpoints[0].position.y) + (jet.position.z - checkpoints[0].position.z) * (jet.position.z - checkpoints[0].position.z)) / (float)4;
     if (arrow_sf <= 2)
@@ -462,11 +488,44 @@ void tick_elements()
     len = parachutes.size();
     for (int i = 0; i < len; i++)
         parachutes[i].tick();
+
+    if ((time(NULL) - volcano_smoke_clear) == 90)
+    {
+        volcano_smoke_clear = time(NULL);
+        volcano_smoke.clear();
+    }
+
+    if ((time(NULL) - fuel_reduce) == 20)
+    {
+        fuel_reduce = time(NULL);
+        jet_fuel -= 5;
+    }
+
+    if (jet_fuel == 0)
+    {
+        cout << "Out of Fuel\n";
+        cout << "Game Over\n";
+        quit(window);
+    }
+
+    if (lives == 0)
+    {
+        cout << "Lives Over\n";
+        cout << "Game Over\n";
+        quit(window);
+    }
+
+    if (jet_altitude <= 2)
+    {
+        cout << "Crashed into Sea\n";
+        cout << "Game Over\n";
+        quit(window);
+    }
 }
 
 void initGL(GLFWwindow *window, int width, int height)
 {
-    sea = Cuboid(0, sea_level, 0, abs(2 * sea_level), 2000, 2000, COLOR_SEA);
+    sea = Cuboid(0, sea_level, 0, abs(2 * sea_level), 3000, 3000, COLOR_SEA);
 
     jet = Jet(0, jet_original_altitude, 40);
 
@@ -539,7 +598,7 @@ void initGL(GLFWwindow *window, int width, int height)
         parachutes.push_back(para);
     }
 
-    float pos_org_x = camera_pos.x - 15;
+    float pos_org_x = camera_pos.x - 25;
     float pos_org_y = camera_pos.y - 30;
     Score s;
     s = Score(pos_org_x, pos_org_y);
@@ -616,6 +675,51 @@ void initGL(GLFWwindow *window, int width, int height)
     s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
     scores.push_back(s);
 
+    pos_org_x += 6.0;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist5 = s.exist6 = s.exist7 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.0;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist7 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.2;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.2;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.2;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
+    scores.push_back(s);
+
+    pos_org_x += 6.0;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist4 = s.exist5 = s.exist6 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.0;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist7 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.2;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
+    scores.push_back(s);
+
+    pos_org_x += 1.2;
+    s = Score(pos_org_x, pos_org_y);
+    s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
+    scores.push_back(s);
+
     programID = LoadShaders("Sample_GL.vert", "Sample_GL.frag");
     Matrices.MatrixID = glGetUniformLocation(programID, "MVP");
 
@@ -636,12 +740,15 @@ void initGL(GLFWwindow *window, int width, int height)
 int main(int argc, char **argv)
 {
     srand(time(0));
+    start_time = time(NULL);
+    volcano_smoke_clear = time(NULL);
+    fuel_reduce = time(NULL);
     int width = 1200;
     int height = 1200;
     follow_cam_view = 1;
 
-    jet_original_altitude = 10;
-    sea_level = -400;
+    jet_original_altitude = 20;
+    sea_level = -1500;
     jet_altitude = 10 * jet_original_altitude;
     jet_speed = 40;
     jet_fuel = 50;
@@ -704,6 +811,7 @@ void detect_collisions()
                     if (enemy_missiles[i].position.z <= jet.position.z + 1.5 && enemy_missiles[i].position.z >= jet.position.z - 1.5)
                     {
                         enemy_missiles[i].exist = false;
+                        lives--;
                     }
                 }
             }
@@ -733,6 +841,7 @@ void detect_collisions()
                                 arrow.position.x = checkpoints[curr_chkp].position.x;
                                 arrow.position.y = 30;
                                 arrow.position.z = checkpoints[curr_chkp].position.z;
+                                points += 10;
                             }
                         }
                     }
@@ -764,6 +873,7 @@ void detect_collisions()
                                 arrow.position.x = checkpoints[curr_chkp].position.x;
                                 arrow.position.y = 30;
                                 arrow.position.z = checkpoints[curr_chkp].position.z;
+                                points += 10;
                             }
                         }
                     }
@@ -808,6 +918,7 @@ void detect_collisions()
                     if (jet.position.z + 2 >= fuelups[i].position.z + 1.5 && jet.position.z - 2 <= fuelups[i].position.z - 1.5)
                     {
                         fuelups[i].exist = false;
+                        jet_fuel += 20;
                     }
                 }
             }
@@ -822,6 +933,8 @@ void detect_collisions()
         {
             if (jet.position.z <= volcanos[i].position.z + 9 && jet.position.z >= volcanos[i].position.z - 9)
             {
+                cout << "Entered No Flying Zone\n";
+                cout << "Game Over\n";
                 quit(window);
             }
         }
@@ -833,11 +946,11 @@ void detect_collisions()
     {
         if (jet.position.y >= rings[i].position.y - 4 && jet.position.y <= rings[i].position.y + 4)
         {
-            if (jet.position.x >= rings[i].position.x - 0.8 && jet.position.x <= rings[i].position.x + 0.8)
+            if (jet.position.x >= rings[i].position.x - 2 && jet.position.x <= rings[i].position.x + 2)
             {
                 if (jet.position.z >= rings[i].position.z - 0.5 && jet.position.z <= rings[i].position.z + 0.5)
                 {
-                    cout << "Into the ring\n";
+                    points += 10;
                 }
             }
         }
