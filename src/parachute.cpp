@@ -38,7 +38,7 @@ void Parachute::draw(glm::mat4 VP)
     holders[3].draw(MVP);
 }
 
-// void Parachute::tick()
-// {
-//     this->position.z -= speed;
-// }
+void Parachute::tick()
+{
+    this->position.y -= 0.01;
+}

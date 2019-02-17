@@ -8,6 +8,7 @@ Jet::Jet(float x, float y, float z)
     this->position = glm::vec3(x, y, z);
     this->tilt_angle = this->rotate_angle = this->rotation = 0;
     this->rotate_jet = this->tilt_jet = false;
+    this->move = true;
 
     int n_circles = 2000;
     int n = 20;
@@ -187,4 +188,10 @@ void Jet::tick(float speed_x, float speed_y, float speed_z)
     this->position.x += speed_x;
     this->position.y += speed_y;
     this->position.z += speed_z;
+}
+
+void Jet::crash()
+{
+    this->move = false;
+    this->position.y = 1;
 }

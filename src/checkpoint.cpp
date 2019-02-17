@@ -4,9 +4,9 @@
 
 Checkpoint::Checkpoint(float x, float y, float z, color_t color)
 {
-    this->w = 8;
+    this->w = 6;
     this->h = 4;
-    this->b = 8;
+    this->b = 6;
 
     this->position = glm::vec3(x, y, z);
     this->rotation = 0;

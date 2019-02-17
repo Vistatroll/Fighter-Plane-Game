@@ -6,6 +6,9 @@ Frustum::Frustum(float x, float y, float z, float h, float r1, float r2, color_t
 {
     this->position = glm::vec3(x, y, z);
     this->rotation = 0;
+    this->r1 = r1;
+    this->r2 = r2;
+    this->h = h;
 
     int n = 20;
     float vertex_buffer_data[18 * n];

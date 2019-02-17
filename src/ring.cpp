@@ -6,7 +6,7 @@ Ring::Ring(float x, float y, float z)
 {
     this->position = glm::vec3(x, y, z);
     this->rotation = 90;
-    ring = Frustum(x, y, z, 1, 6, 6.2, COLOR_RING);
+    ring = Frustum(0, 0, 0, 1, 6, 6.2, COLOR_RING);
 }
 
 void Ring::draw(glm::mat4 VP)

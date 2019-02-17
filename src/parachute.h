@@ -14,6 +14,7 @@ public:
   float rotation;
   bool exist;
   void draw(glm::mat4 VP);
+  void tick();
   Cuboid seat;
   Frustum balloon1, balloon2;
   Cuboid holders[4]; 

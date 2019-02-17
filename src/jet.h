@@ -15,7 +15,9 @@ class Jet
     void draw(glm::mat4 VP);
     void set_position(float x, float y);
     void tick(float speed_x, float speed_y, float speed_z);
+    void crash();
     bool rotate_jet, tilt_jet;
+    bool move;
     Cone head, tail;
     Cuboid target1, target2;
 
