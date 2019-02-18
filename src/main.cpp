@@ -15,6 +15,7 @@
 #include "ring.h"
 #include "parachute.h"
 #include "bomb.h"
+#include "compass.h"
 
 using namespace std;
 
@@ -35,6 +36,7 @@ vector<Fuelup> fuelups;
 vector<Ring> rings;
 vector<Parachute> parachutes;
 vector<Score> scores;
+Compass compass;
 
 float screen_zoom = 0.12, screen_center_x = 0, screen_center_y = 0;
 float camera_rotation_angle = 0;
@@ -123,7 +125,7 @@ void draw()
 
     if (plane_view)
     {
-        eye = glm::vec3(jet.position.x - 502 * sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y- 10, jet.position.z - 502 * cos(jet.rotate_angle * M_PI / 180.0f));
+        eye = glm::vec3(jet.position.x - 502 * sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y - 10, jet.position.z - 502 * cos(jet.rotate_angle * M_PI / 180.0f));
         target = glm::vec3(jet.position.x - 520 * sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y - 20, jet.position.z - 520 * cos(jet.rotate_angle * M_PI / 180.0f));
     }
 
@@ -131,11 +133,6 @@ void draw()
     {
         eye = glm::vec3(jet.position.x - sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y + 50, jet.position.z + cos(jet.rotate_angle * M_PI / 180.0f));
         target = glm::vec3(jet.position.x, jet.position.y + 2, jet.position.z);
-        // eye = glm::vec3(jet.position.x * cos(jet.rotate_angle * M_PI / 180) + jet.position.z * sin(jet.rotate_angle * M_PI / 180), jet.position.y + 50, -jet.position.x * sin(jet.rotate_angle * M_PI / 180) + jet.position.z * cos(jet.rotate_angle * M_PI / 180));
-        // target = glm::vec3(jet.position.x * cos(jet.rotate_angle * M_PI / 180) + jet.position.z * sin(jet.rotate_angle * M_PI / 180), jet.position.y + 2, -jet.position.x * sin(jet.rotate_angle * M_PI / 180) + jet.position.z * cos(jet.rotate_angle * M_PI / 180));
-        // eye = (eye * glm::rotate((float)jet.rotate_angle, glm::vec3[0, 1, 0]));
-        // target.x = target.x * sin(camera_rotation_angle * M_PI / 180.0f);
-        // target.z = target.z * cos(camera_rotation_angle * M_PI / 180.0f);
     }
 
     if (tower_view)
@@ -213,6 +210,9 @@ void draw()
     {
         scores[i].draw(VP);
     }
+
+    compass.rotation = jet.rotate_angle;
+    compass.draw(VP);
 }
 
 void tick_input(GLFWwindow *window)
@@ -262,6 +262,7 @@ void tick_input(GLFWwindow *window)
         float x_change = -0.5 * sin(jet.rotate_angle * M_PI / 180.0f);
         float z_change = -0.5 * cos(jet.rotate_angle * M_PI / 180.0f);
         jet.tick(x_change, 0, z_change);
+        jet_speed = 800;
     }
     if (backward && jet.move)
     {
@@ -390,10 +391,15 @@ void tick_elements()
     if (arrow_sf >= 10)
         arrow_sf = 10;
 
+    float x_change = -0.05 * sin(jet.rotate_angle * M_PI / 180.0f);
+    float z_change = -0.05 * cos(jet.rotate_angle * M_PI / 180.0f);
+    jet.tick(x_change, 0, z_change);
+    jet_speed = 500;
+
     int len = jet_missiles.size();
     for (int i = 0; i < len; i++)
     {
-        jet_missiles[i].tick(-0.3 * sin(jet_missiles[i].y_rotation * M_PI / 180.0f), 0, -0.3 * cos(jet_missiles[i].y_rotation * M_PI / 180.0f));
+        jet_missiles[i].tick(-0.6 * sin(jet_missiles[i].y_rotation * M_PI / 180.0f), 0, -0.6 * cos(jet_missiles[i].y_rotation * M_PI / 180.0f));
     }
 
     len = bombs.size();
@@ -449,15 +455,15 @@ void tick_elements()
 
         if (enemy_missiles[i].move_up)
         {
-            enemy_missiles[i].tick(0, 0.1, 0);
+            enemy_missiles[i].tick(0, 0.3, 0);
         }
         if (enemy_missiles[i].z_rotation == 90)
         {
-            enemy_missiles[i].tick(-0.1 * cos(enemy_missiles[i].x_rotation * M_PI / 180.0f), 0, 0.1 * sin(enemy_missiles[i].x_rotation * M_PI / 180.0f));
+            enemy_missiles[i].tick(-0.3 * cos(enemy_missiles[i].x_rotation * M_PI / 180.0f), 0, 0.3 * sin(enemy_missiles[i].x_rotation * M_PI / 180.0f));
         }
         else if (enemy_missiles[i].z_rotation == -90)
         {
-            enemy_missiles[i].tick(0.1 * cos(enemy_missiles[i].x_rotation * M_PI / 180.0f), 0, 0.1 * sin(enemy_missiles[i].x_rotation * M_PI / 180.0f));
+            enemy_missiles[i].tick(0.3 * cos(enemy_missiles[i].x_rotation * M_PI / 180.0f), 0, 0.3 * sin(enemy_missiles[i].x_rotation * M_PI / 180.0f));
         }
     }
 
@@ -525,15 +531,22 @@ void tick_elements()
 
 void initGL(GLFWwindow *window, int width, int height)
 {
-    sea = Cuboid(0, sea_level, 0, abs(2 * sea_level), 3000, 3000, COLOR_SEA);
+    sea = Cuboid(0, sea_level, 0, abs(2 * sea_level), 800, 800, COLOR_SEA);
 
-    jet = Jet(0, jet_original_altitude, 40);
+    jet = Jet(0, jet_original_altitude, 80);
 
     for (int i = 0; i < 10; i++)
     {
-        int x = rand() % 200 - 100;
+        int x = rand() % 300 - 150;
         int z = -(40 * i + 20);
         Checkpoint chkp = Checkpoint((float)x, 1, (float)z, COLOR_CHECKPOINT);
+        int r = rand() % 3;
+        if (r == 0)
+            chkp.rotation = 90;
+        else if (r == 1)
+            chkp.rotation = -90;
+        else
+            chkp.rotation = -180;
         checkpoints.push_back(chkp);
     }
 
@@ -541,21 +554,21 @@ void initGL(GLFWwindow *window, int width, int height)
     volcanos.push_back(volcano);
     volcano = Volcano(20, 0, -200, COLOR_VOLCANO);
     volcanos.push_back(volcano);
-    volcano = Volcano(-15, 0, -320, COLOR_VOLCANO);
+    volcano = Volcano(-15, 0, -260, COLOR_VOLCANO);
     volcanos.push_back(volcano);
-    volcano = Volcano(5, 0, -440, COLOR_VOLCANO);
+    volcano = Volcano(5, 0, -340, COLOR_VOLCANO);
     volcanos.push_back(volcano);
     for (int i = 0; i < 10; i++)
     {
         int x = -(rand() % 300 + 40);
-        int z = -(rand() % 500 + 50);
+        int z = -(rand() % 300 + 50);
         volcano = Volcano((float)x, 0, (float)z, COLOR_VOLCANO);
         volcanos.push_back(volcano);
     }
     for (int i = 0; i < 10; i++)
     {
         int x = (rand() % 300 + 30);
-        int z = -(rand() % 500 + 50);
+        int z = -(rand() % 300 + 50);
         volcano = Volcano((float)x, 0, (float)z, COLOR_VOLCANO);
         volcanos.push_back(volcano);
     }
@@ -720,6 +733,8 @@ void initGL(GLFWwindow *window, int width, int height)
     s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
     scores.push_back(s);
 
+    compass = Compass(camera_pos.x + 25, camera_pos.y + 25);
+
     programID = LoadShaders("Sample_GL.vert", "Sample_GL.frag");
     Matrices.MatrixID = glGetUniformLocation(programID, "MVP");
 
@@ -748,7 +763,7 @@ int main(int argc, char **argv)
     follow_cam_view = 1;
 
     jet_original_altitude = 20;
-    sea_level = -1500;
+    sea_level = -1000;
     jet_altitude = 10 * jet_original_altitude;
     jet_speed = 40;
     jet_fuel = 50;

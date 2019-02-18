@@ -85,7 +85,7 @@ void Score::draw(glm::mat4 VP)
     Matrices.model = glm::mat4(1.0f);
     glm::mat4 translate = glm::translate(this->position);
     glm::mat4 rotate = glm::rotate((float)(this->rotation * M_PI / 180.0f), glm::vec3(1, 0, 0));
-    glm::mat4 scale = glm::scale(glm::vec3(1, 1, 1));
+    glm::mat4 scale = glm::scale(glm::vec3(1.2, 1.2, 1.2));
     Matrices.model *= (translate * rotate * scale);
     glm::mat4 MVP = VP * Matrices.model;
     glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
