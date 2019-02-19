@@ -125,8 +125,8 @@ void draw()
 
     if (plane_view)
     {
-        eye = glm::vec3(jet.position.x - 502 * sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y - 10, jet.position.z - 502 * cos(jet.rotate_angle * M_PI / 180.0f));
-        target = glm::vec3(jet.position.x - 520 * sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y - 20, jet.position.z - 520 * cos(jet.rotate_angle * M_PI / 180.0f));
+        eye = glm::vec3(jet.position.x - 2.5 * sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y + 0.25, jet.position.z - 2.5 * cos(jet.rotate_angle * M_PI / 180.0f));
+        target = glm::vec3(jet.position.x - 5 * sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y, jet.position.z - 5 * cos(jet.rotate_angle * M_PI / 180.0f));
     }
 
     if (top_view)
@@ -137,19 +137,24 @@ void draw()
 
     if (tower_view)
     {
-        eye = glm::vec3(100, 50, 0);
-        target = glm::vec3(jet.position.x, jet.position.y - 5, jet.position.z);
+        eye = glm::vec3(30, 30, -10);
+        target = glm::vec3(jet.position.x, jet.position.y + 1, jet.position.z);
     }
 
     if (follow_cam_view)
     {
-        eye = glm::vec3(jet.position.x + 5 * sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y + 0.25, jet.position.z + 5 * cos(jet.rotate_angle * M_PI / 180.0f));
+        eye = glm::vec3(jet.position.x + 15 * sin(jet.rotate_angle * M_PI / 180.0f), jet.position.y + 5, jet.position.z + 15 * cos(jet.rotate_angle * M_PI / 180.0f));
         target = jet.position;
     }
 
     if (helicopter_cam_view)
     {
-        //helicopter view
+        double xpos, ypos;
+        glfwGetCursorPos(window, &xpos, &ypos);
+        float theta = (360 * (xpos / 1350)) * M_PI / 180;
+        float phi = (360 * ((ypos + 30) / 750)) * M_PI / 180;
+        eye = jet.position - 15.0f * glm::vec3(cos(theta) * sin(phi), cos(phi), sin(theta) * sin(phi));
+        target = jet.position;
     }
 
     Matrices.view = glm::lookAt(eye, target, up);
@@ -266,7 +271,10 @@ void tick_input(GLFWwindow *window)
     }
     if (backward && jet.move)
     {
-        jet.tick(0, 0, 0.5);
+        float x_change = 0.5 * sin(jet.rotate_angle * M_PI / 180.0f);
+        float z_change = 0.5 * cos(jet.rotate_angle * M_PI / 180.0f);
+        jet.tick(x_change, 0, z_change);
+        jet_speed = 800;
     }
     if (up && jet.move)
     {
@@ -399,7 +407,7 @@ void tick_elements()
     int len = jet_missiles.size();
     for (int i = 0; i < len; i++)
     {
-        jet_missiles[i].tick(-0.6 * sin(jet_missiles[i].y_rotation * M_PI / 180.0f), 0, -0.6 * cos(jet_missiles[i].y_rotation * M_PI / 180.0f));
+        jet_missiles[i].tick(-0.8 * sin(jet_missiles[i].y_rotation * M_PI / 180.0f), 0, -0.8 * cos(jet_missiles[i].y_rotation * M_PI / 180.0f));
     }
 
     len = bombs.size();
@@ -467,30 +475,31 @@ void tick_elements()
         }
     }
 
-    len = volcano_smoke.size();
-    for (int i = 0; i < volcanos.size(); i++)
-    {
-        Frustum s = Frustum(volcanos[i].position.x, volcanos[i].position.y + 12, volcanos[i].position.z, 0.2, 1.7, 1.9, COLOR_DARK_GREY);
-        if (len == 0)
-        {
-            volcano_smoke.push_back(s);
-            volcano_smoke[len].rotation = 0;
-        }
-        else
-        {
-            if ((volcano_smoke[len - 1].position.y - s.position.y) >= 3)
-            {
-                volcano_smoke.push_back(s);
-                volcano_smoke[len].rotation = 0;
-            }
-        }
-    }
+    // len = volcano_smoke.size();
+    // for (int i = 0; i < volcanos.size(); i++)
+    // {
+    //     Frustum s = Frustum(volcanos[i].position.x, volcanos[i].position.y + 12, volcanos[i].position.z, 0.2, 1.7, 1.9, COLOR_DARK_GREY);
+    //     if (len == 0)
+    //     {
+    //         volcano_smoke.push_back(s);
+    //         volcano_smoke[len].rotation = 0;
+    //     }
+    //     else
+    //     {
+    //         if ((volcano_smoke[len - 1].position.y - s.position.y) >= 20)
+    //         {
+    //             volcano_smoke.push_back(s);
+    //             volcano_smoke[len].rotation = 0;
+    //         }
+    //     }
+    // }
 
-    len = volcano_smoke.size();
-    for (int i = 0; i < len; i++)
-    {
-        volcano_smoke[i].tick(0.02, 0.05, -0.02);
-    }
+    // len = volcano_smoke.size();
+    // for (int i = 0; i < len; i++)
+    // {
+    //     volcano_smoke[i].tick(0.02, 0.05, -0.02);
+    // }
+
     len = parachutes.size();
     for (int i = 0; i < len; i++)
         parachutes[i].tick();
@@ -533,7 +542,7 @@ void initGL(GLFWwindow *window, int width, int height)
 {
     sea = Cuboid(0, sea_level, 0, abs(2 * sea_level), 800, 800, COLOR_SEA);
 
-    jet = Jet(0, jet_original_altitude, 80);
+    jet = Jet(0, jet_original_altitude, 50);
 
     for (int i = 0; i < 10; i++)
     {
@@ -598,9 +607,9 @@ void initGL(GLFWwindow *window, int width, int height)
         }
     }
 
-    for (int i = 0; i < 20; i++)
+    for (int i = 0; i < 15; i++)
     {
-        int x = rand() % 60 - 30;
+        int x = rand() % 200 - 100;
         int y = 20 * (i + 1);
         int z;
         if (i == 0)
@@ -623,17 +632,17 @@ void initGL(GLFWwindow *window, int width, int height)
     s.exist7 = true;
     scores.push_back(s);
 
-    pos_org_x += 1.2;
+    pos_org_x += 1.3;
     s = Score(pos_org_x, pos_org_y);
     s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
     scores.push_back(s);
 
-    pos_org_x += 1.2;
+    pos_org_x += 1.3;
     s = Score(pos_org_x, pos_org_y);
     s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
     scores.push_back(s);
 
-    pos_org_x += 1.2;
+    pos_org_x += 1.3;
     s = Score(pos_org_x, pos_org_y);
     s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
     scores.push_back(s);
@@ -648,17 +657,17 @@ void initGL(GLFWwindow *window, int width, int height)
     s.exist7 = true;
     scores.push_back(s);
 
-    pos_org_x += 1.2;
+    pos_org_x += 1.3;
     s = Score(pos_org_x, pos_org_y);
     s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
     scores.push_back(s);
 
-    pos_org_x += 1.2;
+    pos_org_x += 1.3;
     s = Score(pos_org_x, pos_org_y);
     s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
     scores.push_back(s);
 
-    pos_org_x += 1.2;
+    pos_org_x += 1.3;
     s = Score(pos_org_x, pos_org_y);
     s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
     scores.push_back(s);
@@ -673,17 +682,17 @@ void initGL(GLFWwindow *window, int width, int height)
     s.exist7 = true;
     scores.push_back(s);
 
-    pos_org_x += 1.2;
+    pos_org_x += 1.3;
     s = Score(pos_org_x, pos_org_y);
     s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
     scores.push_back(s);
 
-    pos_org_x += 1.2;
+    pos_org_x += 1.3;
     s = Score(pos_org_x, pos_org_y);
     s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
     scores.push_back(s);
 
-    pos_org_x += 1.2;
+    pos_org_x += 1.3;
     s = Score(pos_org_x, pos_org_y);
     s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
     scores.push_back(s);
@@ -698,17 +707,17 @@ void initGL(GLFWwindow *window, int width, int height)
     s.exist7 = true;
     scores.push_back(s);
 
-    pos_org_x += 1.2;
+    pos_org_x += 1.3;
     s = Score(pos_org_x, pos_org_y);
     s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
     scores.push_back(s);
 
-    pos_org_x += 1.2;
+    pos_org_x += 1.3;
     s = Score(pos_org_x, pos_org_y);
     s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
     scores.push_back(s);
 
-    pos_org_x += 1.2;
+    pos_org_x += 1.3;
     s = Score(pos_org_x, pos_org_y);
     s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
     scores.push_back(s);
@@ -723,12 +732,12 @@ void initGL(GLFWwindow *window, int width, int height)
     s.exist7 = true;
     scores.push_back(s);
 
-    pos_org_x += 1.2;
+    pos_org_x += 1.3;
     s = Score(pos_org_x, pos_org_y);
     s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
     scores.push_back(s);
 
-    pos_org_x += 1.2;
+    pos_org_x += 1.3;
     s = Score(pos_org_x, pos_org_y);
     s.exist1 = s.exist2 = s.exist3 = s.exist4 = s.exist5 = s.exist6 = true;
     scores.push_back(s);
@@ -805,7 +814,8 @@ void reset_screen()
     float bottom = screen_center_y - 4 / screen_zoom;
     float left = screen_center_x - 4 / screen_zoom;
     float right = screen_center_x + 4 / screen_zoom;
-    Matrices.projection = glm::ortho(left, right, bottom, top, -500.0f, 500.0f);
+    // Matrices.projection = glm::ortho(left, right, bottom, top, -500.0f, 500.0f);
+    Matrices.projection = glm::perspective(1.57f, 1.0f, 0.1f,  500.0f);
     Matrices.projection1 = glm::ortho(left, right, bottom, top, 0.1f, 500.0f);
 }
 
@@ -913,6 +923,7 @@ void detect_collisions()
                         if (jet_missiles[i].position.z + 1 <= parachutes[j].position.z + 2 && jet_missiles[i].position.z - 1 >= parachutes[j].position.z - 2)
                         {
                             parachutes[j].exist = false;
+                            jet_missiles[i].exist = false;
                         }
                     }
                 }

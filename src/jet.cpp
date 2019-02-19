@@ -151,9 +151,9 @@ Jet::Jet(float x, float y, float z)
     this->head = Cone(0, 0, -1.0, 1.0, r, COLOR_DARK_GREY);
     this->tail = Cone(0, 0, 1.3, 0.8, r, COLOR_BLACK);
 
-    this->target1 = Cuboid(0, 1, -4, 0.2, 2.5, 0.02, COLOR_RED);
+    this->target1 = Cuboid(0, 1, -2, 0.2, 2.5, 0.02, COLOR_RED);
     this->target1.rotation = 45;
-    this->target2 = Cuboid(0, 1, -4, 0.2, 2.5, 0.02, COLOR_RED);
+    this->target2 = Cuboid(0, 1, -2, 0.2, 2.5, 0.02, COLOR_RED);
     this->target2.rotation = -45;
 }
 
