@@ -475,30 +475,30 @@ void tick_elements()
         }
     }
 
-    // len = volcano_smoke.size();
-    // for (int i = 0; i < volcanos.size(); i++)
-    // {
-    //     Frustum s = Frustum(volcanos[i].position.x, volcanos[i].position.y + 12, volcanos[i].position.z, 0.2, 1.7, 1.9, COLOR_DARK_GREY);
-    //     if (len == 0)
-    //     {
-    //         volcano_smoke.push_back(s);
-    //         volcano_smoke[len].rotation = 0;
-    //     }
-    //     else
-    //     {
-    //         if ((volcano_smoke[len - 1].position.y - s.position.y) >= 20)
-    //         {
-    //             volcano_smoke.push_back(s);
-    //             volcano_smoke[len].rotation = 0;
-    //         }
-    //     }
-    // }
+    len = volcano_smoke.size();
+    for (int i = 0; i < volcanos.size(); i++)
+    {
+        Frustum s = Frustum(volcanos[i].position.x, volcanos[i].position.y + 12, volcanos[i].position.z, 0.2, 1.7, 1.9, COLOR_DARK_GREY);
+        if (len == 0)
+        {
+            volcano_smoke.push_back(s);
+            volcano_smoke[len].rotation = 0;
+        }
+        else
+        {
+            if ((volcano_smoke[len - 1].position.y - s.position.y) >= 20)
+            {
+                volcano_smoke.push_back(s);
+                volcano_smoke[len].rotation = 0;
+            }
+        }
+    }
 
-    // len = volcano_smoke.size();
-    // for (int i = 0; i < len; i++)
-    // {
-    //     volcano_smoke[i].tick(0.02, 0.05, -0.02);
-    // }
+    len = volcano_smoke.size();
+    for (int i = 0; i < len; i++)
+    {
+        volcano_smoke[i].tick(0.02, 0.05, -0.02);
+    }
 
     len = parachutes.size();
     for (int i = 0; i < len; i++)
@@ -567,14 +567,14 @@ void initGL(GLFWwindow *window, int width, int height)
     volcanos.push_back(volcano);
     volcano = Volcano(5, 0, -340, COLOR_VOLCANO);
     volcanos.push_back(volcano);
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 3; i++)
     {
         int x = -(rand() % 300 + 40);
         int z = -(rand() % 300 + 50);
         volcano = Volcano((float)x, 0, (float)z, COLOR_VOLCANO);
         volcanos.push_back(volcano);
     }
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 3; i++)
     {
         int x = (rand() % 300 + 30);
         int z = -(rand() % 300 + 50);
@@ -814,8 +814,7 @@ void reset_screen()
     float bottom = screen_center_y - 4 / screen_zoom;
     float left = screen_center_x - 4 / screen_zoom;
     float right = screen_center_x + 4 / screen_zoom;
-    // Matrices.projection = glm::ortho(left, right, bottom, top, -500.0f, 500.0f);
-    Matrices.projection = glm::perspective(1.57f, 1.0f, 0.1f,  500.0f);
+    Matrices.projection = glm::perspective(1.57f, 1.0f, 0.1f, 500.0f);
     Matrices.projection1 = glm::ortho(left, right, bottom, top, 0.1f, 500.0f);
 }
 
@@ -976,7 +975,7 @@ void detect_collisions()
             {
                 if (jet.position.z >= rings[i].position.z - 0.5 && jet.position.z <= rings[i].position.z + 0.5)
                 {
-                    points += 10;
+                    points += 5;
                 }
             }
         }
