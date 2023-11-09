@@ -13,4 +13,3 @@ bool Timer::processTick() {
         return true;
     } else
         return false;
-}
